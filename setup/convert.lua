@@ -7,7 +7,7 @@ end
 
 local function Upgrade()
 	if started then
-		return shared.warning('Data is already being converted, please wait..')
+		return warn('Data is already being converted, please wait..')
 	end
 
 	started = true
@@ -76,7 +76,7 @@ end
 
 local function ConvertESX()
 	if started then
-		return shared.warning('Data is already being converted, please wait..')
+		return warn('Data is already being converted, please wait..')
 	end
 
 	started = true
@@ -135,7 +135,7 @@ end
 
 local function ConvertQB()
 	if started then
-		return shared.warning('Data is already being converted, please wait..')
+		return warn('Data is already being converted, please wait..')
 	end
 
 	started = true
@@ -308,7 +308,7 @@ end
 
 local function Convert_Old_ESX_Property()
 	if started then
-		return shared.warning('Data is already being converted, please wait..')
+		return warn('Data is already being converted, please wait..')
 	end
 
 	started = true
