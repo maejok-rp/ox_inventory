@@ -3,7 +3,17 @@ if not lib then return end
 local CraftingBenches = {}
 local Items = client.items
 local locations = shared.target == 'ox_target' and 'zones' or 'points'
-local createBlip = client.utils.CreateBlip
+
+local function createBlip(settings, coords)
+	local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+	SetBlipSprite(blip, settings.id)
+	SetBlipDisplay(blip, 4)
+	SetBlipScale(blip, settings.scale)
+	SetBlipColour(blip, settings.colour)
+	SetBlipAsShortRange(blip, true)
+	BeginTextCommandSetBlipName(settings.name)
+	EndTextCommandSetBlipName(blip)
+end
 
 ---@param id number
 ---@param data table

@@ -137,6 +137,10 @@ Inventory.Evidence = setmetatable(data('evidence'), {
 	end
 })
 
+local function OpenStash(data)
+	exports.ox_inventory:openInventory('stash', data)
+end
+
 local function nearbyStash(self)
 	---@diagnostic disable-next-line: param-type-mismatch
 	DrawMarker(2, self.coords.x, self.coords.y, self.coords.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.15, 30, 30, 150, 222, false, false, 0, true, false, false, false)
@@ -170,7 +174,7 @@ Inventory.Stashes = setmetatable(data('stashes'), {
 									label = stash.target.label or locale('open_stash'),
 									job = stash.groups,
 									action = function()
-										exports.ox_inventory:openInventory('stash', stash.name)
+										OpenStash({id=id})
 									end,
 									iconColor = stash.target.iconColor,
 								},
@@ -184,7 +188,7 @@ Inventory.Stashes = setmetatable(data('stashes'), {
 						coords = stash.coords,
 						distance = 16,
 						inv = 'stash',
-						invId = stash.name,
+						invId = id,
 						nearby = nearbyStash
 					})
 				end

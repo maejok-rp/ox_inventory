@@ -468,8 +468,9 @@ end
 exports('openNearbyInventory', openNearbyInventory)
 
 local currentInstance
-local playerCoords
+local drops, playerCoords
 local table = lib.table
+local Shops = client.shops
 local Inventory = client.inventory
 
 ---@todo remove or replace when the bridge module gets restructured
@@ -479,7 +480,7 @@ function OnPlayerData(key, val)
 	if key == 'groups' then
 		Inventory.Stashes()
 		Inventory.Evidence()
-		client.refreshShops()
+		Shops()
 	elseif key == 'dead' and val then
 		currentWeapon = Weapon.Disarm(currentWeapon)
 		client.closeInventory()
@@ -489,7 +490,7 @@ function OnPlayerData(key, val)
 end
 
 -- People consistently ignore errors when one of the "modules" failed to load
-if not Utils or not Weapon or not Items or not Inventory then return end
+if not Utils or not Weapon or not Items or not Shops or not Inventory then return end
 
 local invHotkeys = false
 
@@ -890,17 +891,12 @@ end
 ---@param point CPoint
 local function onEnterDrop(point)
 	if not point.instance or point.instance == currentInstance and not point.entity then
-		local model = point.model or `prop_med_bag_01b`
-
-		lib.requestModel(model)
-
-		local entity = CreateObject(model, point.coords.x, point.coords.y, point.coords.z, false, true, true)
-
-		SetModelAsNoLongerNeeded(model)
+		lib.requestModel(`prop_med_bag_01b`)
+		local entity = CreateObject(`prop_med_bag_01b`, point.coords.x, point.coords.y, point.coords.z, false, true, true)
+		SetModelAsNoLongerNeeded(`prop_med_bag_01b`)
 		PlaceObjectOnGroundProperly(entity)
 		FreezeEntityPosition(entity, true)
 		SetEntityCollision(entity, false, true)
-
 		point.entity = entity
 	end
 end
@@ -914,29 +910,24 @@ local function onExitDrop(point)
 	end
 end
 
-local function createDrop(dropId, data)
-	local point = lib.points.new({
-		coords = data.coords,
-		distance = 16,
-		invId = dropId,
-		instance = data.instance,
-		model = data.model
-	})
-
-	if client.dropprops then
-		point.distance = 30
-		point.onEnter = onEnterDrop
-		point.onExit = onExitDrop
-	else
-		point.nearby = nearbyDrop
-	end
-
-	drops[dropId] = point
-end
-
-RegisterNetEvent('ox_inventory:createDrop', function(dropId, data, owner, slot)
+RegisterNetEvent('ox_inventory:createDrop', function(drop, data, owner, slot)
 	if drops then
-		createDrop(dropId, data)
+		local point = lib.points.new({
+			coords = data.coords,
+			distance = 16,
+			invId = drop,
+			instance = data.instance,
+		})
+
+		if client.dropprops then
+			point.distance = 30
+			point.onEnter = onEnterDrop
+			point.onExit = onExitDrop
+		else
+			point.nearby = nearbyDrop
+		end
+
+		drops[drop] = point
 	end
 
 	if owner == PlayerData.source then
@@ -946,7 +937,7 @@ RegisterNetEvent('ox_inventory:createDrop', function(dropId, data, owner, slot)
 
 		if invOpen and #(GetEntityCoords(playerPed) - data.coords) <= 1 then
 			if not cache.vehicle then
-				client.openInventory('drop', dropId)
+				client.openInventory('drop', drop)
 			else
 				SendNUIMessage({
 					action = 'setupInventory',
@@ -957,12 +948,12 @@ RegisterNetEvent('ox_inventory:createDrop', function(dropId, data, owner, slot)
 	end
 end)
 
-RegisterNetEvent('ox_inventory:removeDrop', function(dropId)
+RegisterNetEvent('ox_inventory:removeDrop', function(id)
 	if drops then
-		local point = drops[dropId]
+		local point = drops[id]
 
 		if point then
-			drops[dropId] = nil
+			drops[id] = nil
 			point:remove()
 
 			if point.entity then Utils.DeleteObject(point.entity) end
@@ -1087,8 +1078,14 @@ RegisterNetEvent('ox_inventory:setPlayerInventory', function(currentDrops, inven
 
 	drops = currentDrops
 
-	for dropId, data in pairs(currentDrops) do
-		createDrop(dropId, data)
+	for k, v in pairs(currentDrops) do
+		drops[k] = lib.points.new({
+			coords = v.coords,
+			distance = 16,
+			invId = k,
+			instance = v.instance,
+			nearby = nearbyDrop
+		})
 	end
 
 	local hasTextUi = false
@@ -1155,7 +1152,7 @@ RegisterNetEvent('ox_inventory:setPlayerInventory', function(currentDrops, inven
 	PlayerData.loaded = true
 
 	lib.notify({ description = locale('inventory_setup') })
-	client.refreshShops()
+	Shops()
 	Inventory.Stashes()
 	Inventory.Evidence()
 	registerCommands()
@@ -1343,7 +1340,21 @@ end)
 
 AddEventHandler('onResourceStop', function(resourceName)
 	if shared.resource == resourceName then
-		client.onLogout()
+		if client.parachute then
+			Utils.DeleteObject(client.parachute)
+		end
+
+		if client.dropprops then
+			for _, point in pairs(drops) do
+				Utils.DeleteObject(point.entity)
+			end
+		end
+
+		if invOpen then
+			SetNuiFocus(false, false)
+			SetNuiFocusKeepInput(false)
+			TriggerScreenblurFadeOut(0)
+		end
 	end
 end)
 
