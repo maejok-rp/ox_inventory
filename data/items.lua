@@ -235,6 +235,14 @@ return {
 		description = "Looks pretty expensive to me"
 	},
 
+	['raw_cannabis'] = {
+		label = 'Cannabis Flower',
+		weight = 25,
+		stack = true,
+		close = false,
+		description = "Harvested cannabis flower"
+	},
+
 	['weed_purple-haze'] = {
 		label = 'Purple Haze 2g',
 		weight = 200,
