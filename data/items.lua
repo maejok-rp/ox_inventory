@@ -1022,9 +1022,9 @@ return {
 	['markedbills'] = {
 		label = 'Marked Money',
 		weight = 1000,
-		stack = false,
+		stack = true,
 		close = true,
-		description = "Money?"
+		description = "Dirty, Dye-Stained Money"
 	},
 
 	['visa'] = {
